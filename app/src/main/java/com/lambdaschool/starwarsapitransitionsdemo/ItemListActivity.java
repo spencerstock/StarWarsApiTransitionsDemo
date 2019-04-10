@@ -12,6 +12,7 @@ import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -150,10 +151,19 @@ public class ItemListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             // S04M03-10 convert id to string to display
-            holder.mIdView.setText(String.valueOf(mValues.get(position).getId()));
-            holder.mContentView.setText(mValues.get(position).getName());
+            final SwApiObject swApiObject = mValues.get(position);
+            holder.mIdView.setText(String.valueOf(swApiObject.getId()));
+            holder.mNameView.setText(swApiObject.getName());
 
-            holder.itemView.setTag(mValues.get(position));
+//        S04M03-13 bind data to new views
+            holder.mCategoryView.setText(swApiObject.getCategory());
+            holder.mImageView.setImageDrawable(
+                    holder.mImageView.getContext().getDrawable(
+                            DrawableResolver.getDrawableId(
+                                    swApiObject.getCategory(),
+                                    swApiObject.getId())));
+
+            holder.itemView.setTag(swApiObject);
             holder.itemView.setOnClickListener(mOnClickListener);
         }
 
@@ -162,14 +172,18 @@ public class ItemListActivity extends AppCompatActivity {
             return mValues.size();
         }
 
+//        S04M03-12 add new views to viewholder
         class ViewHolder extends RecyclerView.ViewHolder {
             final TextView mIdView;
-            final TextView mContentView;
+            final TextView mNameView, mCategoryView;
+            final ImageView mImageView;
 
             ViewHolder(View view) {
                 super(view);
                 mIdView = (TextView) view.findViewById(R.id.id_text);
-                mContentView = (TextView) view.findViewById(R.id.content);
+                mNameView = (TextView) view.findViewById(R.id.name);
+                mCategoryView = view.findViewById(R.id.category);
+                mImageView = view.findViewById(R.id.image_view);
             }
         }
     }
