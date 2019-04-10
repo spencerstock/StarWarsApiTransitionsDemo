@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--S04M03-11 Improve item layout-->
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/parent_view"
     android:layout_marginTop="10dp"
     android:layout_marginEnd="10dp"
     android:layout_marginStart="10dp"

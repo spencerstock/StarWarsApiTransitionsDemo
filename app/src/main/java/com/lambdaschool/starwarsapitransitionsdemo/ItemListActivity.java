@@ -12,6 +12,8 @@ import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -111,6 +113,10 @@ public class ItemListActivity extends AppCompatActivity {
         private final ItemListActivity             mParentActivity;
         private final List<SwApiObject> mValues;
         private final boolean                      mTwoPane;
+
+        // S04M03-16 set the position value
+        private int lastPosition = -1;
+
         private final View.OnClickListener         mOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -165,6 +171,9 @@ public class ItemListActivity extends AppCompatActivity {
 
             holder.itemView.setTag(swApiObject);
             holder.itemView.setOnClickListener(mOnClickListener);
+
+            // S04M03-15 call animation method
+            setEnterAnimation(holder.parentView, position);
         }
 
         @Override
@@ -172,11 +181,21 @@ public class ItemListActivity extends AppCompatActivity {
             return mValues.size();
         }
 
+        // S04M03-14 writing a method to set animation
+        private void setEnterAnimation(View viewToAnimate, int position) {
+            if(position > lastPosition) {
+                Animation animation = AnimationUtils.loadAnimation(viewToAnimate.getContext(), android.R.anim.slide_in_left);
+                viewToAnimate.startAnimation(animation);
+                lastPosition = position;
+            }
+        }
+
 //        S04M03-12 add new views to viewholder
         class ViewHolder extends RecyclerView.ViewHolder {
             final TextView mIdView;
             final TextView mNameView, mCategoryView;
             final ImageView mImageView;
+            final View parentView;
 
             ViewHolder(View view) {
                 super(view);
@@ -184,6 +203,7 @@ public class ItemListActivity extends AppCompatActivity {
                 mNameView = (TextView) view.findViewById(R.id.name);
                 mCategoryView = view.findViewById(R.id.category);
                 mImageView = view.findViewById(R.id.image_view);
+                parentView = view.findViewById(R.id.parent_view);
             }
         }
     }
