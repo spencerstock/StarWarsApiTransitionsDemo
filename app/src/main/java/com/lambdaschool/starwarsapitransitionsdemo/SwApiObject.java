@@ -1,7 +1,9 @@
 package com.lambdaschool.starwarsapitransitionsdemo;
 
+import java.io.Serializable;
+
 // S04M03-3 Add Model Object
-public class SwApiObject {
+public class SwApiObject implements Serializable {
     private int id;
     private String category, name;
 

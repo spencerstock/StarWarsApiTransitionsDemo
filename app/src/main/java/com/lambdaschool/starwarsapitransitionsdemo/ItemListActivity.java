@@ -1,9 +1,12 @@
 package com.lambdaschool.starwarsapitransitionsdemo;
 
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -37,7 +40,7 @@ public class ItemListActivity extends AppCompatActivity {
      */
     private boolean mTwoPane;
 
-    private ArrayList<SwApiObject> swApiObjects;
+    private ArrayList<SwApiObject>        swApiObjects;
     private SimpleItemRecyclerViewAdapter viewAdapter;
 
     @Override
@@ -85,12 +88,12 @@ public class ItemListActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                SwApiObject person = null;
-                int counter = 1;
-                int failCount = 0;
+                SwApiObject person    = null;
+                int         counter   = 1;
+                int         failCount = 0;
                 do {
                     person = SwApiDao.getPerson(counter++);
-                    if(person != null) {
+                    if (person != null) {
                         swApiObjects.add(person);
                         runOnUiThread(new Runnable() {
                             @Override
@@ -102,7 +105,30 @@ public class ItemListActivity extends AppCompatActivity {
                     } else {
                         ++failCount;
                     }
-                } while(person != null || failCount < 2);
+                } while (person != null || failCount < 2);
+            }
+        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SwApiObject starship    = null;
+                int         counter   = 1;
+                int         failCount = 0;
+                do {
+                    starship = SwApiDao.getStarship(counter++);
+                    if (starship != null) {
+                        swApiObjects.add(starship);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                viewAdapter.notifyItemChanged(swApiObjects.size() - 1);
+                            }
+                        });
+                        failCount = 0;
+                    } else {
+                        ++failCount;
+                    }
+                } while (starship != null || failCount < 2);
             }
         }).start();
     }
@@ -110,20 +136,22 @@ public class ItemListActivity extends AppCompatActivity {
     public static class SimpleItemRecyclerViewAdapter
             extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-        private final ItemListActivity             mParentActivity;
+        private final ItemListActivity  mParentActivity;
         private final List<SwApiObject> mValues;
-        private final boolean                      mTwoPane;
+        private final boolean           mTwoPane;
 
         // S04M03-16 set the position value
         private int lastPosition = -1;
 
-        private final View.OnClickListener         mOnClickListener = new View.OnClickListener() {
+        /*private final View.OnClickListener         mOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // S04M03-17 update click listener to pass our object
                 SwApiObject item = (SwApiObject) view.getTag();
                 if (mTwoPane) {
                     Bundle arguments = new Bundle();
-                    arguments.putString(ItemDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
+//                    arguments.putString(ItemDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));  // put object in intent
+                    arguments.putSerializable(ItemDetailFragment.ARG_ITEM_ID, item);
                     ItemDetailFragment fragment = new ItemDetailFragment();
                     fragment.setArguments(arguments);
                     mParentActivity.getSupportFragmentManager().beginTransaction()
@@ -132,12 +160,18 @@ public class ItemListActivity extends AppCompatActivity {
                 } else {
                     Context context = view.getContext();
                     Intent  intent  = new Intent(context, ItemDetailActivity.class);
-                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getId());
+                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item);  // put object in intent
 
-                    context.startActivity(intent);
+                    // S04M03-22 add options to make transition appear
+                    Bundle options = ActivityOptions.makeSceneTransitionAnimation(
+                            (Activity)view.getContext(),
+
+                                                                                 ).toBundle();
+
+                    context.startActivity(intent, options);
                 }
             }
-        };
+        };*/
 
         SimpleItemRecyclerViewAdapter(ItemListActivity parent,
                                       List<SwApiObject> items,
@@ -170,7 +204,38 @@ public class ItemListActivity extends AppCompatActivity {
                                     swApiObject.getId())));
 
             holder.itemView.setTag(swApiObject);
-            holder.itemView.setOnClickListener(mOnClickListener);
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    // S04M03-17 update click listener to pass our object
+                    SwApiObject item = (SwApiObject) view.getTag();
+                    if (mTwoPane) {
+                        Bundle arguments = new Bundle();
+//                    arguments.putString(ItemDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));  // put object in intent
+                        arguments.putSerializable(ItemDetailFragment.ARG_ITEM_ID, item);
+                        ItemDetailFragment fragment = new ItemDetailFragment();
+                        fragment.setArguments(arguments);
+                        mParentActivity.getSupportFragmentManager().beginTransaction()
+                                       .replace(R.id.item_detail_container, fragment)
+                                       .commit();
+                    } else {
+                        Context context = view.getContext();
+                        Intent  intent  = new Intent(context, ItemDetailActivity.class);
+                        intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item);  // put object in intent
+
+                        // S04M03-22 add options to make transition appear
+//                        Bundle options = ActivityOptions.makeSceneTransitionAnimation((Activity) view.getContext()).toBundle();
+                        // S04M03-24 change constructor to allow for shared views
+                        Bundle options = ActivityOptions.makeSceneTransitionAnimation(
+                                (Activity) view.getContext(),
+                                holder.mImageView,
+                                ViewCompat.getTransitionName(holder.mImageView)
+                                                                                     ).toBundle();
+
+                        context.startActivity(intent, options);
+                    }
+                }
+            });
 
             // S04M03-15 call animation method
             setEnterAnimation(holder.parentView, position);
@@ -183,19 +248,19 @@ public class ItemListActivity extends AppCompatActivity {
 
         // S04M03-14 writing a method to set animation
         private void setEnterAnimation(View viewToAnimate, int position) {
-            if(position > lastPosition) {
+            if (position > lastPosition) {
                 Animation animation = AnimationUtils.loadAnimation(viewToAnimate.getContext(), android.R.anim.slide_in_left);
                 viewToAnimate.startAnimation(animation);
                 lastPosition = position;
             }
         }
 
-//        S04M03-12 add new views to viewholder
+        //        S04M03-12 add new views to viewholder
         class ViewHolder extends RecyclerView.ViewHolder {
             final TextView mIdView;
             final TextView mNameView, mCategoryView;
             final ImageView mImageView;
-            final View parentView;
+            final View      parentView;
 
             ViewHolder(View view) {
                 super(view);
