@@ -64,12 +64,17 @@ public class ItemDetailFragment extends Fragment {
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
             // S04M03-20 set content to be our drawable
-            ((ImageView) rootView.findViewById(R.id.item_detail)).setImageDrawable(
+            ((ImageView) rootView.findViewById(R.id.item_detail_image)).setImageDrawable(
                     rootView.getContext().getDrawable(
                             DrawableResolver.getDrawableId(
                                     mItem.getCategory(),
                                     mItem.getId())));
+
+
+            TextView tv = rootView.findViewById(R.id.item_detail_text);
+            tv.setText(mItem.toString());
         }
+
 
         return rootView;
     }
